@@ -1,0 +1,246 @@
+# #Plates 1-13, post trimming workflow
+IDS, = glob_wildcards("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_I/raw_data/20201222_SU011_MJA_1-13/{id}_R1_001.fastq.gz")
+
+# a pseudo-rule that collects the target files
+rule all:
+    input:
+        #map, sort and index paired reads following trimming
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_paired_mapped_reads_ecoli/{id}.bam", id=IDS),
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_paired_mapped_reads_ecoli/{id}.bam.bai", id=IDS),
+
+        #map, sort and index unpaired reads following trimming -- R1
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam", id=IDS),
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam.bai", id=IDS),
+
+        #map, sort and index unpaired reads following trimming -- R2
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam", id=IDS),
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam.bai", id=IDS),
+
+        #merge unpaired R1 and R2 bam files
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_merged_mapped_reads_R1_R2_ecoli/{id}.bam", id=IDS),
+
+        #merged unpaired (both directions) and paired bam files
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam", id=IDS),
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam.bai", id=IDS),
+       
+        #output stats below
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/ecoli_alignment_stats/20201222_SU011_MJA_1-13_trimmed_merged_mapped_reads_with_R1_R2_samstats_ecoli/{id}_ecoli_samstats.txt", id=IDS)
+
+#process reads that were paired after trimming
+rule bwa_map_paired_sorted:
+    input:
+        fa="/Users/mja/Appel_MutSequencing/snakemake_files/genomes/ecoli/ecoli_genome.fa",
+        in1="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_paired_reads/{id}_R1_001.fastq.gz",
+        in2="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_paired_reads/{id}_R2_001.fastq.gz"
+    output:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_paired_mapped_reads_ecoli/{id}.bam"
+    shell:
+        "bwa mem -t 8 {input.fa} {input.in1} {input.in2} | samtools sort -@8 -o {output}"
+
+rule paired_index:
+    input:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_paired_mapped_reads_ecoli/{id}.bam"
+    output:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_paired_mapped_reads_ecoli/{id}.bam.bai"
+    shell:
+        "samtools index {input}"
+
+#process reads that were unpaired after trimming /// these must be aligned in single read mode 
+#R1 first
+rule bwa_map_unpaired_R1:
+    input:
+        fa="/Users/mja/Appel_MutSequencing/snakemake_files/genomes/ecoli/ecoli_genome.fa",
+        in1="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_unpaired_reads/{id}_R1_001.fastq.gz"
+    output:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam"
+    shell:
+        "bwa mem -t 8 {input.fa} {input.in1} | samtools sort -@8 -o {output}"
+rule unpaired_index_R1:
+    input:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam"
+    output:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam.bai"
+    shell:
+        "samtools index {input}"
+#R2
+rule bwa_map_unpaired_R2:
+    input:
+        fa="/Users/mja/Appel_MutSequencing/snakemake_files/genomes/ecoli/ecoli_genome.fa",
+        in1="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_unpaired_reads/{id}_R2_001.fastq.gz"
+    output:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam"
+    shell:
+        "bwa mem -t 8 {input.fa} {input.in1} | samtools sort -@8 -o {output}"
+rule unpaired_index_R2:
+    input:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam"
+    output:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam.bai"
+    shell:
+        "samtools index {input}"
+
+
+#Merge R1 and R2 (these are still unpaired reads)
+rule merge_reads_unpaired:
+    input:
+        R1="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam",
+        R2="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam"
+    output:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_merged_mapped_reads_R1_R2_ecoli/{id}.bam"
+    shell:
+        "samtools merge -@8 {output} {input.R1} {input.R2}"
+
+
+#now merge unpaired reads (both drections) with paired reads
+rule merge_reads_final:
+    input:
+        paired="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_paired_mapped_reads_ecoli/{id}.bam",
+        unpaired_R1_R2="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_unpaired_merged_mapped_reads_R1_R2_ecoli/{id}.bam"
+    output:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam"
+    shell:
+        "samtools merge -@8 {output} {input.paired} {input.unpaired_R1_R2}"
+
+#index bam files
+rule samtools_index:
+    input:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam"
+    output:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam.bai"
+    shell:
+        "samtools index {input}"
+
+rule get_samstats:
+    input:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201222_SU011_MJA_1-13_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam"
+    output:
+        "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/ecoli_alignment_stats/20201222_SU011_MJA_1-13_trimmed_merged_mapped_reads_with_R1_R2_samstats_ecoli/{id}_ecoli_samstats.txt"
+    shell:
+        "samtools stats {input} > {output}"
+
+##################################
+##################################
+##################################
+##################################
+##################################
+##################################
+
+# ##Plates 14 5/31/21, post trimming workflow
+# IDS, = glob_wildcards("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_I/raw_data/20201219_SU012_MJA_14/{id}_R1_001.fastq.gz")
+
+# # a pseudo-rule that collects the target files
+# rule all:
+#     input:
+#         #map, sort and index paired reads following trimming
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_paired_mapped_reads_ecoli/{id}.bam", id=IDS),
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_paired_mapped_reads_ecoli/{id}.bam.bai", id=IDS),
+
+#         #map, sort and index unpaired reads following trimming -- R1
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam", id=IDS),
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam.bai", id=IDS),
+
+#         #map, sort and index unpaired reads following trimming -- R2
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam", id=IDS),
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam.bai", id=IDS),
+
+#         #merge unpaired R1 and R2 bam files
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_merged_mapped_reads_R1_R2_ecoli/{id}.bam", id=IDS),
+
+#         #merged unpaired (both directions) and paired bam files
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam", id=IDS),
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam.bai", id=IDS),
+       
+#         #output stats below
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/ecoli_alignment_stats/20201219_SU012_MJA_14_trimmed_merged_mapped_reads_with_R1_R2_samstats_ecoli/{id}_ecoli_samstats.txt", id=IDS)
+
+# #process reads that were paired after trimming
+# rule bwa_map_paired_sorted:
+#     input:
+#         fa="/Users/mja/Appel_MutSequencing/snakemake_files/genomes/ecoli/ecoli_genome.fa",
+#         in1="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_paired_reads/{id}_R1_001.fastq.gz",
+#         in2="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_paired_reads/{id}_R2_001.fastq.gz"
+#     output:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_paired_mapped_reads_ecoli/{id}.bam"
+#     shell:
+#         "bwa mem -t 8 {input.fa} {input.in1} {input.in2} | samtools sort -@8 -o {output}"
+
+# rule paired_index:
+#     input:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_paired_mapped_reads_ecoli/{id}.bam"
+#     output:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_paired_mapped_reads_ecoli/{id}.bam.bai"
+#     shell:
+#         "samtools index {input}"
+
+# #process reads that were unpaired after trimming /// these must be aligned in single read mode 
+# #R1 first
+# rule bwa_map_unpaired_R1:
+#     input:
+#         fa="/Users/mja/Appel_MutSequencing/snakemake_files/genomes/ecoli/ecoli_genome.fa",
+#         in1="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_unpaired_reads/{id}_R1_001.fastq.gz"
+#     output:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam"
+#     shell:
+#         "bwa mem -t 8 {input.fa} {input.in1} | samtools sort -@8 -o {output}"
+# rule unpaired_index_R1:
+#     input:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam"
+#     output:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam.bai"
+#     shell:
+#         "samtools index {input}"
+# #R2
+# rule bwa_map_unpaired_R2:
+#     input:
+#         fa="/Users/mja/Appel_MutSequencing/snakemake_files/genomes/ecoli/ecoli_genome.fa",
+#         in1="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_unpaired_reads/{id}_R2_001.fastq.gz"
+#     output:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam"
+#     shell:
+#         "bwa mem -t 8 {input.fa} {input.in1} | samtools sort -@8 -o {output}"
+# rule unpaired_index_R2:
+#     input:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam"
+#     output:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam.bai"
+#     shell:
+#         "samtools index {input}"
+
+
+# #Merge R1 and R2 (these are still unpaired reads)
+# rule merge_reads_unpaired:
+#     input:
+#         R1="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R1_ecoli/{id}.bam",
+#         R2="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_mapped_reads_R2_ecoli/{id}.bam"
+#     output:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_merged_mapped_reads_R1_R2_ecoli/{id}.bam"
+#     shell:
+#         "samtools merge -@8 {output} {input.R1} {input.R2}"
+
+
+# #now merge unpaired reads (both drections) with paired reads
+# rule merge_reads_final:
+#     input:
+#         paired="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_paired_mapped_reads_ecoli/{id}.bam",
+#         unpaired_R1_R2="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_unpaired_merged_mapped_reads_R1_R2_ecoli/{id}.bam"
+#     output:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam"
+#     shell:
+#         "samtools merge -@8 {output} {input.paired} {input.unpaired_R1_R2}"
+
+# #index bam files
+# rule samtools_index:
+#     input:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam"
+#     output:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam.bai"
+#     shell:
+#         "samtools index {input}"
+
+# rule get_samstats:
+#     input:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_mapped_sorted_ecoli/20201219_SU012_MJA_14_trimmed_merged_mapped_reads_with_R1_R2_ecoli/{id}.bam"
+#     output:
+#         "/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/ecoli_alignment_stats/20201219_SU012_MJA_14_trimmed_merged_mapped_reads_with_R1_R2_samstats_ecoli/{id}_ecoli_samstats.txt"
+#     shell:
+#         "samtools stats {input} > {output}"

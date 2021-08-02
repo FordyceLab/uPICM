@@ -1,0 +1,58 @@
+# below is just for plates 14 12/25/20
+IDS, = glob_wildcards("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_I/raw_data/20201222_SU011_MJA_1-13/{id}_R1_001.fastq.gz")
+
+# a pseudo-rule that collects the target files
+rule all:
+    input:
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_paired_reads/{id}_R1_001.fastq.gz", id=IDS),
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_unpaired_reads/{id}_R1_001.fastq.gz", id=IDS),
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_paired_reads/{id}_R2_001.fastq.gz", id=IDS),
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_unpaired_reads/{id}_R2_001.fastq.gz", id=IDS),
+        expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_logs/{id}.err", id=IDS)
+
+rule trim_reads:
+    input:
+        fa="/Users/mja/Appel_MutSequencing/snakemake_files/trimmomatic/adapters/NexteraPE-PE.fa",
+        in1="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_I/raw_data/20201222_SU011_MJA_1-13/{id}_R1_001.fastq.gz",
+        in2="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_I/raw_data/20201222_SU011_MJA_1-13/{id}_R2_001.fastq.gz"
+    output:
+        # output_trimlog="/Users/mja/Appel_MutSequencing/multiQC_test_dir_trimmed_log/{id}.txt",
+        output_forward_paired="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_paired_reads/{id}_R1_001.fastq.gz",
+        output_forward_unpaired="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_unpaired_reads/{id}_R1_001.fastq.gz",
+        output_reverse_paired="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_paired_reads/{id}_R2_001.fastq.gz",
+        output_reverse_unpaired="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_unpaired_reads/{id}_R2_001.fastq.gz",
+        log="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_1-13/20201222_SU011_MJA_1-13_trimmed_logs/{id}.err"
+
+
+    shell:
+        "(trimmomatic PE -threads 8 {input.in1} {input.in2} {output.output_forward_paired} {output.output_forward_unpaired} {output.output_reverse_paired} {output.output_reverse_unpaired} ILLUMINACLIP:/Users/mja/Appel_MutSequencing/snakemake_files/trimmomatic/adapters/NexteraPE-PE.fa:2:30:10:2:keepBothReads LEADING:3 TRAILING:3 MINLEN:36) 2> {output.log}"
+
+
+        # below is just for plates 14 12/25/20
+# IDS, = glob_wildcards("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_I/raw_data/20201219_SU012_MJA_14/{id}_R1_001.fastq.gz")
+
+# # a pseudo-rule that collects the target files
+# rule all:
+#     input:
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_paired_reads/{id}_R1_001.fastq.gz", id=IDS),
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_unpaired_reads/{id}_R1_001.fastq.gz", id=IDS),
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_paired_reads/{id}_R2_001.fastq.gz", id=IDS),
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_unpaired_reads/{id}_R2_001.fastq.gz", id=IDS),
+#         expand("/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_logs/{id}.err", id=IDS)
+
+# rule trim_reads:
+#     input:
+#         fa="/Users/mja/Appel_MutSequencing/snakemake_files/trimmomatic/adapters/NexteraPE-PE.fa",
+#         in1="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_I/raw_data/20201219_SU012_MJA_14/{id}_R1_001.fastq.gz",
+#         in2="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_I/raw_data/20201219_SU012_MJA_14/{id}_R2_001.fastq.gz"
+#     output:
+#         # output_trimlog="/Users/mja/Appel_MutSequencing/multiQC_test_dir_trimmed_log/{id}.txt",
+#         output_forward_paired="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_paired_reads/{id}_R1_001.fastq.gz",
+#         output_forward_unpaired="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_unpaired_reads/{id}_R1_001.fastq.gz",
+#         output_reverse_paired="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_paired_reads/{id}_R2_001.fastq.gz",
+#         output_reverse_unpaired="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_unpaired_reads/{id}_R2_001.fastq.gz",
+#         log="/Users/mja/Appel_MutSequencing/2021_mut_seq_workup_II/trimmed_14/20201219_SU012_MJA_14_trimmed_logs/{id}.err"
+
+
+#     shell:
+#         "(trimmomatic PE -threads 8 {input.in1} {input.in2} {output.output_forward_paired} {output.output_forward_unpaired} {output.output_reverse_paired} {output.output_reverse_unpaired} ILLUMINACLIP:/Users/mja/Appel_MutSequencing/snakemake_files/trimmomatic/adapters/NexteraPE-PE.fa:2:30:10:2:keepBothReads LEADING:3 TRAILING:3 MINLEN:36) 2> {output.log}"
